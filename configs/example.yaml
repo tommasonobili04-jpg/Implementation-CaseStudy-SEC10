@@ -1,2 +1,46 @@
-seed: 123
-results_dir: results
+seed: 42
+
+paths:
+  t0: "data/quotes_t0.csv"
+  T:  "data/quotes_T.csv"
+
+grids:
+  x_atm: 220        # points near ATM at t0
+  x_tail: 120       # tail points at t0
+  y_atm: 220        # points near ATM at T=1
+  y_tail: 120       # tail points at T=1
+  K_time: 80        # time steps between t0 and 1
+
+budget:
+  V: 0.12
+  corridor:
+    enabled: false
+    L: null
+    U: null
+
+psi:
+  type: "quad"      # placeholder for cost model; conjugate used in dual
+  params: { }
+
+payoff:
+  kappa: 1.0
+  strike: null      # if non-null, (F1 - kappa*F_{t0} - strike)_+
+
+solver:
+  eta0: 1.0e2
+  eta_growth: 5.0
+  eps_obs: 1.0e-6
+  eps_curv: 1.0e-6
+  eps_val: 1.0e-8
+  max_outer: 20
+
+sizing:
+  inv_sr: 0.5
+  kelly_fraction: 0.25
+  risk_budget: 3.0
+
+costs:
+  spread_van: 0.002
+  spread_var: 0.010
+  delta_spread: 0.0005
+  impact_c: 0.0
