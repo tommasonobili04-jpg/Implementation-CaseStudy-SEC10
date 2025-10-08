@@ -1,7 +1,10 @@
-numpy
-scipy
-pandas
-matplotlib
-cvxpy
-osqp
-PyYAML
+numpy>=1.26
+scipy>=1.11
+pandas>=2.0
+matplotlib>=3.8
+cvxpy>=1.4
+osqp>=0.6
+ecos>=2.0
+PyYAML>=6.0
+numba>=0.59
+typing_extensions>=4.10
