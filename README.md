@@ -44,3 +44,4 @@ pip install -r requirements.txt
 
 # Run all unit tests (should show 8 passed)
 pytest -q tests
+
