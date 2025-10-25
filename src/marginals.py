@@ -289,3 +289,13 @@ def build_marginals(quotes_t0: pd.DataFrame,
     # Project to convex order if needed
     mu_adj, nu_adj = project_to_noarb(mu_full, grid_x, nu_full, grid_y, tol=tol_cx)
     return mu_adj, nu_adj
+
+cat >> src/marginals.py <<'PY'
+
+# --- required by tests: simple example density (standard normal) ---
+import numpy as np
+def example_density(x):
+    x = np.asarray(x, dtype=float)
+    return (1.0/np.sqrt(2*np.pi)) * np.exp(-0.5 * x**2)
+PY
+
