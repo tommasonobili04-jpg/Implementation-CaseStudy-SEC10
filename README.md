@@ -5,7 +5,7 @@ Python implementation of the full case study, including data preprocessing, conv
 
 ---
 
-## 🧠 Overview
+## Overview
 
 This repository implements a self-contained pipeline for **robust option pricing and hedging** under convex constraints.  
 The workflow reproduces the structure of *Section 10* of the reference paper:
