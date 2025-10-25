@@ -1,6 +1,6 @@
 # Implementation Case Study – SEC10
 
-📊 **Robust Pricing and Hedging under Convex Constraints (Section 10)**  
+**Robust Pricing and Hedging under Convex Constraints (Section 10)**  
 Python implementation of the full case study, including data preprocessing, convex marginal reconstruction, dual penalized optimization, and diagnostic certificates.
 
 ---
