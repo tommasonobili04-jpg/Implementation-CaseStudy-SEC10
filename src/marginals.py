@@ -140,7 +140,7 @@ def _smooth_kernel(p: np.ndarray, strength: float = 1.0) -> np.ndarray:
     q /= q.sum()
     return q
 
-def noarb_call_fit(K: np.ndarray, bid: np.ndarray, ask: np.ndarray, mid: np.ndarray) -> np.ndarray:
+def noarb_call_fit(K: np.ndarray, bid: np.ndarray, ask: np.ndarray, mid: np.ndarray, tol: float = 1e-9) -> np.ndarray:
     """
     Convex & non-increasing fit within bid/ask on a non-uniform K grid:
     minimize ||C - mid||^2  s.t. vertical monotonicity, convexity (scaled second diff), and bid<=C<=ask.
@@ -148,6 +148,15 @@ def noarb_call_fit(K: np.ndarray, bid: np.ndarray, ask: np.ndarray, mid: np.ndar
     import cvxpy as cp
     K = np.asarray(K, float); m = K.size
     C = cp.Variable(m)
+
+    # Sanitize bid/ask (numerical safety): ensure bid <= ask and mid in [bid,ask]
+    bid = np.asarray(bid, float).copy()
+    ask = np.asarray(ask, float).copy()
+    mid = np.asarray(mid, float).copy()
+    pair_min = np.minimum(bid, ask)
+    pair_max = np.maximum(bid, ask)
+    bid, ask = pair_min, pair_max
+    mid = np.clip(mid, bid - 1e-12, ask + 1e-12)
 
     # Monotonicity: C_{i+1} - C_i <= 0
     D1 = np.eye(m, k=1) - np.eye(m)
@@ -166,7 +175,7 @@ def noarb_call_fit(K: np.ndarray, bid: np.ndarray, ask: np.ndarray, mid: np.ndar
     A = np.asarray(rows)
     convex = A @ C >= 0
 
-    constr = [mono, convex, C >= bid, C <= ask]
+    constr = [mono, convex, C >= (bid - tol), C <= (ask + tol)]
     prob = cp.Problem(cp.Minimize(cp.sum_squares(C - mid)), constr)
     try:
         prob.solve(solver=cp.OSQP, verbose=False)
@@ -260,20 +269,35 @@ def build_marginals(quotes_t0: pd.DataFrame,
     # In-spread repair before BL to enforce monotonicity/convexity
     if isinstance(quotes_t0, pd.DataFrame):
         g0 = quotes_t0.sort_values("K")
-        Cx = noarb_call_fit(
-            Kx,
-            np.interp(Kx, g0["K"], g0["bid"]),
-            np.interp(Kx, g0["K"], g0["ask"]),
-            Cx
-        )
+        try:
+            Cx = noarb_call_fit(
+                Kx,
+                np.interp(Kx, g0["K"], g0["bid"]),
+                np.interp(Kx, g0["K"], g0["ask"]),
+                Cx,
+                tol=1e-9,
+            )
+        except Exception:
+            # Fallback: clamp mid nello spread interpolato
+            b = np.interp(Kx, g0["K"], g0["bid"])
+            a = np.interp(Kx, g0["K"], g0["ask"])
+            lo = np.minimum(b, a); hi = np.maximum(b, a)
+            Cx = np.clip(Cx, lo, hi)
     if isinstance(quotes_T, pd.DataFrame):
         g1 = quotes_T.sort_values("K")
-        Cy = noarb_call_fit(
-            Ky,
-            np.interp(Ky, g1["K"], g1["bid"]),
-            np.interp(Ky, g1["K"], g1["ask"]),
-            Cy
-        )
+        try:
+            Cy = noarb_call_fit(
+                Ky,
+                np.interp(Ky, g1["K"], g1["bid"]),
+                np.interp(Ky, g1["K"], g1["ask"]),
+                Cy,
+                tol=1e-9,
+            )
+        except Exception:
+            b = np.interp(Ky, g1["K"], g1["bid"])
+            a = np.interp(Ky, g1["K"], g1["ask"])
+            lo = np.minimum(b, a); hi = np.maximum(b, a)
+            Cy = np.clip(Cy, lo, hi)
 
     qx = breeden_litzenberger_forward(Cx, Kx, clip_neg=clip_neg)
     qy = breeden_litzenberger_forward(Cy, Ky, clip_neg=clip_neg)
@@ -287,7 +311,26 @@ def build_marginals(quotes_t0: pd.DataFrame,
     nu_full[sely] = nu_comp
 
     # Project to convex order if needed
+
+
     mu_adj, nu_adj = project_to_noarb(mu_full, grid_x, nu_full, grid_y, tol=tol_cx)
+
+
+    # enforce normalization to exactly 1.0 (machine-precision)
+
+
+    mu_adj = (mu_adj.clip(min=0.0))
+
+
+    nu_adj = (nu_adj.clip(min=0.0))
+
+
+    mu_adj = mu_adj / (mu_adj.sum() + 1e-16)
+
+
+    nu_adj = nu_adj / (nu_adj.sum() + 1e-16)
+
+
     return mu_adj, nu_adj
 
 
