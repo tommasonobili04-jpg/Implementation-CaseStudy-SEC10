@@ -17,7 +17,7 @@ def _dxx_matrix_nonuniform(x: np.ndarray) -> sparse.csr_matrix:
     sub[1:]    = im1
     sup[:-1]   = ip1
 
-    # bordi one-sided 2° ordine non-uniformi
+    
     dx1, dx2 = x[1]-x[0], x[2]-x[1]
     main[0] =  2.0 / (dx1 * (dx1 + dx2))
     sup[0]  = -2.0 / (dx1 * dx2)
