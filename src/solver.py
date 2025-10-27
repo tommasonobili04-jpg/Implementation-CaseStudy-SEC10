@@ -80,7 +80,7 @@ def solve_dual_penalized(mu: np.ndarray,
 
     prob = cp.Problem(obj, constr)
 
-    # ordine: backend richiesto, poi ECOS, poi SCS, poi OSQP
+    
     orders = []
     if backend == "OSQP":
         orders.append((cp.OSQP, {"verbose": False, "max_iter": max_iters, "eps_abs": eps_val, "eps_rel": eps_val, "polishing": True}))
@@ -89,7 +89,7 @@ def solve_dual_penalized(mu: np.ndarray,
     else:
         orders.append((cp.ECOS, {"verbose": False, "max_iters": max_iters, "abstol": eps_val, "reltol": eps_val}))
 
-    # fallback robusti
+    
     orders.extend([
         (cp.ECOS, {"verbose": False, "max_iters": max_iters, "abstol": eps_val, "reltol": eps_val}),
         (cp.SCS,  {"verbose": False, "max_iters": max_iters, "eps": eps_val}),
